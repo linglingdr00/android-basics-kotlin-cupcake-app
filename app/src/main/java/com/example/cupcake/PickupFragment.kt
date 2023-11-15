@@ -19,9 +19,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.navigation.fragment.findNavController
 import com.example.cupcake.databinding.FragmentPickupBinding
+import com.example.cupcake.model.OrderViewModel
 
 /**
  * [PickupFragment] allows the user to choose a pickup date for the cupcake order.
@@ -32,6 +34,9 @@ class PickupFragment : Fragment() {
     // This property is non-null between the onCreateView() and onDestroyView() lifecycle callbacks,
     // when the view hierarchy is attached to the fragment.
     private var binding: FragmentPickupBinding? = null
+
+    // 使用 activityViewModels() 取得共用的 view model -> OrderViewModel
+    private val sharedViewModel: OrderViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -46,7 +51,13 @@ class PickupFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding?.apply {
-            nextButton.setOnClickListener { goToNextScreen() }
+            // 設定 viewModel 為共用 view model
+            this.viewModel = sharedViewModel
+            // 設定 binding 物件的 lifecycle owner
+            lifecycleOwner = viewLifecycleOwner
+            // 將 data variable flavorFragment bind 至 fragment instance
+            // 使用 this 關鍵字來存取 fragment 中的 fragment instance(使用 @ 並明確指定 fragment class name)
+            pickupFragment = this@PickupFragment
         }
     }
 
@@ -54,7 +65,17 @@ class PickupFragment : Fragment() {
      * Navigate to the next screen to see the order summary.
      */
     fun goToNextScreen() {
-        Toast.makeText(activity, "Next", Toast.LENGTH_SHORT).show()
+        // 使用 findNavController() 方法取得 NavController，並呼叫此方法的 navigate()，
+        // 然後傳入 action ID R.id.action_pickupFragment_to_summaryFragment，前往 summary fragment
+        findNavController().navigate(R.id.action_pickupFragment_to_summaryFragment)
+    }
+
+    /* 取消訂單 */
+    fun cancelOrder() {
+        // 呼叫 sharedViewModel.resetOrder() 清除 view model
+        sharedViewModel.resetOrder()
+        // 從 pickup fragment 返回 start fragment
+        findNavController().navigate(R.id.action_pickupFragment_to_startFragment)
     }
 
     /**

@@ -19,9 +19,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.navigation.fragment.findNavController
 import com.example.cupcake.databinding.FragmentFlavorBinding
+import com.example.cupcake.model.OrderViewModel
 
 /**
  * [FlavorFragment] allows a user to choose a cupcake flavor for the order.
@@ -32,6 +34,9 @@ class FlavorFragment : Fragment() {
     // This property is non-null between the onCreateView() and onDestroyView() lifecycle callbacks,
     // when the view hierarchy is attached to the fragment.
     private var binding: FragmentFlavorBinding? = null
+
+    // 使用 activityViewModels() 取得共用的 view model -> OrderViewModel
+    private val sharedViewModel: OrderViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -46,7 +51,14 @@ class FlavorFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding?.apply {
-            nextButton.setOnClickListener { goToNextScreen() }
+            // 設定 viewModel 為共用 view model
+            this.viewModel = sharedViewModel
+            // 設定 binding 物件的 lifecycle owner
+            lifecycleOwner = viewLifecycleOwner
+            // 將 data variable flavorFragment bind 至 fragment instance
+            // 使用 this 關鍵字來存取 fragment 中的 fragment instance(使用 @ 並明確指定 fragment class name)
+            flavorFragment = this@FlavorFragment
+
         }
     }
 
@@ -54,7 +66,20 @@ class FlavorFragment : Fragment() {
      * Navigate to the next screen to choose pickup date.
      */
     fun goToNextScreen() {
-        Toast.makeText(activity, "Next", Toast.LENGTH_SHORT).show()
+        // 使用 findNavController() 方法取得 NavController，並呼叫此方法的 navigate()，
+        // 然後傳入 action ID R.id.action_flavorFragment_to_pickupFragment，前往 pickup fragment
+        findNavController().navigate(R.id.action_flavorFragment_to_pickupFragment)
+
+        // 顯示 Toast 訊息
+        // Toast.makeText(activity, "Next", Toast.LENGTH_SHORT).show()
+    }
+
+    /* 取消訂單 */
+    fun cancelOrder() {
+        // 呼叫 sharedViewModel.resetOrder() 清除 view model
+        sharedViewModel.resetOrder()
+        // 從 flavor fragment 返回 start fragment
+        findNavController().navigate(R.id.action_flavorFragment_to_startFragment)
     }
 
     /**

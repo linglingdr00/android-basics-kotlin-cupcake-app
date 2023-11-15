@@ -19,9 +19,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
+import androidx.navigation.fragment.findNavController
 import com.example.cupcake.databinding.FragmentStartBinding
+import com.example.cupcake.model.OrderViewModel
 
 /**
  * This is the first screen of the Cupcake app. The user can choose how many cupcakes to order.
@@ -32,6 +34,9 @@ class StartFragment : Fragment() {
     // This property is non-null between the onCreateView() and onDestroyView() lifecycle callbacks,
     // when the view hierarchy is attached to the fragment.
     private var binding: FragmentStartBinding? = null
+
+    // 使用 activityViewModels() 取得共用的 view model -> OrderViewModel
+    private val sharedViewModel: OrderViewModel by activityViewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -45,19 +50,26 @@ class StartFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding?.apply {
-            // Set up the button click listeners
-            orderOneCupcake.setOnClickListener { orderCupcake(1) }
-            orderSixCupcakes.setOnClickListener { orderCupcake(6) }
-            orderTwelveCupcakes.setOnClickListener { orderCupcake(12) }
-        }
+        // 將 data variable tartFragment bind 至 fragment instance
+        // 使用 this 關鍵字來存取 fragment 中的 fragment instance
+        binding?.startFragment = this
     }
 
     /**
      * Start an order with the desired quantity of cupcakes and navigate to the next screen.
      */
     fun orderCupcake(quantity: Int) {
-        Toast.makeText(activity, "Ordered $quantity cupcake(s)", Toast.LENGTH_SHORT).show()
+        // 呼叫共用 view model 的 setQuantity() 方法來更新數量
+        sharedViewModel.setQuantity(quantity)
+
+        // 若未設定口味，則先將預設口味設定為「Vanilla」(香草)
+        if (sharedViewModel.hasNoFlavorSet()) {
+            sharedViewModel.setFlavor(getString(R.string.vanilla))
+        }
+
+        // 使用 findNavController() 方法取得 NavController，並呼叫此方法的 navigate()，
+        // 然後傳入 action ID R.id.action_startFragment_to_flavorFragment，前往 flavor fragment
+        findNavController().navigate(R.id.action_startFragment_to_flavorFragment)
     }
 
     /**
